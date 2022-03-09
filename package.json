@@ -1,6 +1,6 @@
 {
   "name": "rankingalgorithm",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A small ranking algorithm that can be used in a social media app, an e-commerce website(every app that users can upload something)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
