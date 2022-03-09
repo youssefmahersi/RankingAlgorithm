@@ -1,0 +1,38 @@
+{
+  "name": "rankingalgorithm",
+  "version": "1.0.0",
+  "description": "A small ranking algorithm that can be used in a social media app, an e-commerce website(every app that users can upload something)",
+  "main": "index.js",
+  "files": [
+    "src/**/*"
+  ],
+  "scripts": {
+    "test": "jest --config jestconfig.json",
+    "build": "tsc",
+    "format": "prettier --write \"src/**/*.ts\" ",
+    "lint": "tslint -p tsconfig.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/youssefmahersi/RankingAlgorithm.git"
+  },
+  "keywords": [
+    "rankingAlgorithm"
+  ],
+  "author": "youssef mahersi",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/youssefmahersi/RankingAlgorithm/issues"
+  },
+  "homepage": "https://github.com/youssefmahersi/RankingAlgorithm#readme",
+  "devDependencies": {
+    "@types/jest": "^27.4.1",
+    "@types/mocha": "^9.1.0",
+    "jest": "^27.5.1",
+    "prettier": "^2.5.1",
+    "ts-jest": "^27.1.3",
+    "tslint": "^6.1.3",
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "^4.6.2"
+  }
+}
