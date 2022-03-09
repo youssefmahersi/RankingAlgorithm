@@ -2,7 +2,8 @@
   "name": "rankingalgorithm",
   "version": "1.0.0",
   "description": "A small ranking algorithm that can be used in a social media app, an e-commerce website(every app that users can upload something)",
-  "main": "index.js",
+  "main": "dist/index.js",
+   "types": "dist/index.d.ts",
   "files": [
     "src/**/*"
   ],
@@ -10,7 +11,12 @@
     "test": "jest --config jestconfig.json",
     "build": "tsc",
     "format": "prettier --write \"src/**/*.ts\" ",
-    "lint": "tslint -p tsconfig.json"
+    "lint": "tslint -p tsconfig.json",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm test && npm run lint",
+    "preversion": "npm run lint",
+    "version": "npm run format && git add -A src",
+    "postversion": "git push && git push --tags"
   },
   "repository": {
     "type": "git",
