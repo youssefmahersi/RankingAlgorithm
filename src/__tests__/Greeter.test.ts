@@ -11,6 +11,6 @@ const rankingAlgorithm = new RankingAlgorithm(8,0.0002,[{
   ref: "like"
 }])
 
-test('My Greeter', () => {
+test('first second', () => {
   expect(rankingAlgorithm.calc(12,13,0)).toBe(845000);
 });

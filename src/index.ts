@@ -10,14 +10,14 @@ export class RankingAlgorithm {
         return 1 -exp+this.startValue;
     }
     calc(...sumProps:any):number{
-        var total: number=0;
-        var i:number=0;
-        for (let arg of this.config) {
-            if (arg.valuable === true) {
+        let total: number=0;
+        let i:number=0;
+        for (const config of this.config) {
+            if (config.valuable === true) {
                 const refarg = this.config.find((arg) => arg.ref === this.config[i].field);
                 const refargIndex = this.config.findIndex((arg) => arg.ref === this.config[i].field);
                 if (refargIndex !== -1) {
-                    switch (arg.typeOfAdd) {
+                    switch (config.typeOfAdd) {
                         case "Sum": {
                             total = total + (sumProps[i] + sumProps[refargIndex]);
                             break;
@@ -37,7 +37,7 @@ export class RankingAlgorithm {
             }
             i++;
         }
-        var lastResult:number = total/this.time(sumProps[sumProps.length-1]);
+        const lastResult:number = total/this.time(sumProps[sumProps.length-1]);
         return lastResult;
     }
 
