@@ -1,4 +1,4 @@
-import RankingAlgorithm from '../index';
+import { RankingAlgorithm } from '../index';
 const rankingAlgorithm = new RankingAlgorithm(8,0.0002,[{
   field:"like",
   valuable: true,
