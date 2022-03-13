@@ -1,5 +1,5 @@
 import { argType,TypeOfAdd } from "./types/types";
-export class RankingAlgorithm {
+export default class RankingAlgorithm {
 
     constructor(public stretch:number,public startValue:number,public config:argType[]){
 
