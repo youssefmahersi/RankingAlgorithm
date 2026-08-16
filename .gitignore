@@ -1,2 +1,19 @@
-/node_modules
-/dist
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Python
+.venv/
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+sdk/python/dist/
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/

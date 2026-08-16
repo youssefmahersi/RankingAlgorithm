@@ -1,0 +1,86 @@
+{
+  "name": "@youssefmahersi/ranking",
+  "version": "2.0.0",
+  "description": "Deterministic, dependency-free ranking for feeds and catalogues. score = log10(1 + sum(w*p)) - g*log10(t + t0). Auditable, runnable in SQL, explainable.",
+  "keywords": [
+    "ranking",
+    "feed",
+    "hacker-news",
+    "time-decay",
+    "sort",
+    "relevance",
+    "recommender",
+    "deterministic"
+  ],
+  "license": "MIT",
+  "author": "Youssef Mahersi",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/youssefmahersi/RankingAlgorithm.git",
+    "directory": "sdk/typescript"
+  },
+  "homepage": "https://github.com/youssefmahersi/RankingAlgorithm#readme",
+  "bugs": {
+    "url": "https://github.com/youssefmahersi/RankingAlgorithm/issues"
+  },
+  "sideEffects": false,
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
+    },
+    "./legacy": {
+      "import": {
+        "types": "./dist/esm/legacy.d.ts",
+        "default": "./dist/esm/legacy.js"
+      },
+      "require": {
+        "types": "./dist/cjs/legacy.d.ts",
+        "default": "./dist/cjs/legacy.js"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "npm run clean && tsc -p tsconfig.esm.json && tsc -p tsconfig.cjs.json && node scripts/finalize-build.mjs",
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
+    "size": "node scripts/report-size.mjs",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.15.0",
+    "@types/node": "^22.9.0",
+    "eslint": "^9.15.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.15.0",
+    "vitest": "^2.1.5"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

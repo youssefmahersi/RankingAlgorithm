@@ -1,0 +1,185 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # ---------------------------------------------------------------- consistency
+  # The cheapest job, and the one most likely to catch a bad release: four SDKs
+  # must agree on the version they claim and on the spec revision they implement.
+  consistency:
+    name: version + conformance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Every SDK reports the version in /VERSION
+        run: npm run version:check
+      - name: The conformance fixture is not stale
+        run: npm run conformance:check
+
+  # ---------------------------------------------------------------- typescript
+  typescript:
+    name: typescript (node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 22, 24]
+    defaults:
+      run:
+        working-directory: sdk/typescript
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+        working-directory: .
+      - run: npm run build
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm test
+      - name: Both entry points load
+        run: |
+          node -e "const r=require('./dist/cjs/index.js'); if(typeof r.rank!=='function') throw new Error('CJS entry is broken')"
+          node --input-type=module -e "import('./dist/esm/index.js').then(m=>{if(typeof m.rank!=='function') throw new Error('ESM entry is broken')})"
+      - name: Report bundle size
+        run: npm run size
+
+  # ---------------------------------------------------------------- javascript
+  javascript:
+    name: javascript (node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 22, 24]
+    defaults:
+      run:
+        working-directory: sdk/javascript
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+        working-directory: .
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm test
+
+  # -------------------------------------------------------------------- python
+  python:
+    name: python ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.9', '3.10', '3.11', '3.12', '3.13']
+    defaults:
+      run:
+        working-directory: sdk/python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - run: pytest -q
+      - run: ruff check .
+      - name: mypy --strict
+        # mypy dropped support for targeting 3.9; type-check on the newer runners.
+        if: matrix.python != '3.9'
+        run: mypy
+
+  # ------------------------------------------------------------------------ go
+  go:
+    name: go ${{ matrix.go }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        go: ['1.21', '1.22', '1.23']
+    defaults:
+      run:
+        working-directory: sdk/go
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+          # The module has zero dependencies, so there is no go.sum to cache.
+          cache: false
+      - name: gofmt
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "These files need gofmt:"; echo "$unformatted"; exit 1
+          fi
+      - run: go vet ./...
+      - run: go test -race -count=1 ./...
+
+  # ------------------------------------------------------------------ sql parity
+  # The claim that toSQL() reproduces the library's ordering is worth nothing
+  # unless something runs it. This does, against a real Postgres, on the same
+  # fixture the four SDKs are held to.
+  sql-parity:
+    name: toSQL parity against postgres
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: parity
+          POSTGRES_DB: parity
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: node scripts/sql-parity.mjs
+        env:
+          DATABASE_URL: postgres://postgres:parity@localhost:5432/parity
+
+  # A single required check, so branch protection has one name to point at.
+  ci:
+    name: ci
+    runs-on: ubuntu-latest
+    needs: [consistency, typescript, javascript, python, go, sql-parity]
+    if: always()
+    steps:
+      - name: Fail if any job failed
+        run: |
+          if echo '${{ join(needs.*.result, ' ') }}' | grep -qE 'failure|cancelled'; then
+            echo "One or more jobs failed."; exit 1
+          fi
+          echo "All jobs passed."

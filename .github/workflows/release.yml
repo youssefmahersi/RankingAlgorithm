@@ -1,0 +1,175 @@
+name: Release
+
+# Releasing four SDKs at once is the whole reason this file exists. The version in
+# /VERSION is the single source of truth; a tag that disagrees with it stops the
+# run before anything is published, so the four artefacts can never drift apart.
+#
+# To cut a release:
+#   node scripts/sync-version.mjs 2.1.0
+#   # update CHANGELOG.md, commit, then:
+#   git tag v2.1.0 && git push origin main --tags
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Verify everything, publish nothing'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: verify the tag matches every SDK
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - id: version
+        name: The tag, /VERSION and all four SDKs must agree
+        run: |
+          version=$(cat VERSION | tr -d '[:space:]')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            tag="${GITHUB_REF_NAME#v}"
+            if [ "$tag" != "$version" ]; then
+              echo "Tag v$tag does not match VERSION ($version)."
+              echo "Run: node scripts/sync-version.mjs $tag"
+              exit 1
+            fi
+          fi
+
+      - run: npm ci
+      - run: npm run version:check
+      - run: npm run build
+      - run: npm run conformance:check
+      - run: npm test
+
+      - name: CHANGELOG has an entry for this version
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          if ! grep -q "^## \[\?$version\]\?" CHANGELOG.md; then
+            echo "CHANGELOG.md has no '## $version' section."
+            exit 1
+          fi
+
+  test-python:
+    name: python
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdk/python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install -e ".[dev]" build
+      - run: pytest -q && ruff check . && mypy
+      - run: python -m build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-dist
+          path: sdk/python/dist/
+
+  test-go:
+    name: go
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdk/go
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: '1.23', cache: false }
+      - run: go vet ./... && go test -race -count=1 ./...
+
+  publish-npm:
+    name: publish npm packages
+    needs: [verify, test-python, test-go]
+    if: github.ref_type == 'tag' && !inputs.dry_run
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+      - run: npm ci
+      - run: npm run build
+      - run: npm publish --workspace @youssefmahersi/ranking --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: npm publish --workspace @youssefmahersi/ranking-js --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-pypi:
+    name: publish to PyPI
+    needs: [verify, test-python, test-go]
+    if: github.ref_type == 'tag' && !inputs.dry_run
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write # PyPI trusted publishing; no API token to rotate
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  tag-go-module:
+    name: tag the Go module
+    needs: [verify, test-python, test-go]
+    if: github.ref_type == 'tag' && !inputs.dry_run
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Push sdk/go/vX.Y.Z
+        # A Go module in a subdirectory is versioned by a tag carrying that
+        # subdirectory as a prefix, so `go get` needs its own tag alongside the
+        # release tag. Forgetting it is the classic way to ship a Go module that
+        # nobody can install.
+        run: |
+          version="${{ needs.verify.outputs.version }}"
+          git tag "sdk/go/v$version" "${{ github.sha }}"
+          git push origin "sdk/go/v$version"
+
+  github-release:
+    name: create the GitHub release
+    needs: [publish-npm, publish-pypi, tag-go-module]
+    if: github.ref_type == 'tag' && !inputs.dry_run
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          body: |
+            Four SDKs, one spec revision. See [CHANGELOG.md](CHANGELOG.md) and the
+            [1.x → 2.x migration guide](MIGRATION.md).
+
+            | SDK | Install |
+            | --- | --- |
+            | TypeScript | `npm i @youssefmahersi/ranking` |
+            | JavaScript | `npm i @youssefmahersi/ranking-js` |
+            | Python | `pip install rankingalgorithm` |
+            | Go | `go get github.com/youssefmahersi/RankingAlgorithm/sdk/go/v2` |

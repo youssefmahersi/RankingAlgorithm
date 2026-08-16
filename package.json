@@ -1,43 +1,32 @@
 {
-  "name": "rankingalgorithm",
-  "version": "1.0.6",
-  "description": "A small ranking algorithm that can be used in a social media app, an e-commerce website(every app that users can upload something)",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "test": "jest --config jestconfig.json",
-    "build": "tsc",
-    "format": "prettier --write \"src/**/*.ts\" ",
-    "lint": "tslint -p tsconfig.json",
-    "prepare": "npm run build",
-    "prepublishOnly": "npm test && npm run lint",
-    "preversion": "npm run lint",
-    "version": "npm run format && git add -A src",
-    "postversion": "git push && git push --tags"
-  },
+  "name": "rankingalgorithm-monorepo",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Workspace root for RankingAlgorithm v2. The published packages live under sdk/.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/youssefmahersi/RankingAlgorithm.git"
   },
-  "keywords": [
-    "rankingAlgorithm"
-  ],
-  "author": "youssef mahersi",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/youssefmahersi/RankingAlgorithm/issues"
+  "author": "Youssef Mahersi",
+  "workspaces": [
+    "sdk/typescript",
+    "sdk/javascript"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace @youssefmahersi/ranking",
+    "test": "npm run build && npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "format": "npm run format --workspaces --if-present",
+    "format:check": "npm run format:check --workspaces --if-present",
+    "conformance": "npm run build && node scripts/generate-conformance.mjs",
+    "conformance:check": "npm run build && node scripts/generate-conformance.mjs --check",
+    "version:sync": "node scripts/sync-version.mjs",
+    "version:check": "node scripts/sync-version.mjs --check",
+    "size": "npm run size --workspace @youssefmahersi/ranking"
   },
-  "homepage": "https://github.com/youssefmahersi/RankingAlgorithm#readme",
-  "devDependencies": {
-    "@types/jest": "^27.4.1",
-    "jest": "^27.5.1",
-    "prettier": "^2.5.1",
-    "ts-jest": "^27.1.3",
-    "tslint": "^6.1.3",
-    "tslint-config-prettier": "^1.18.0",
-    "typescript": "^4.6.2"
-  },
-  "files": [
-    "dist/**/*"
-  ]
+  "engines": {
+    "node": ">=18"
+  }
 }

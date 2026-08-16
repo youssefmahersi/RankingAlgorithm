@@ -1,0 +1,70 @@
+{
+  "name": "@youssefmahersi/ranking-js",
+  "version": "2.0.0",
+  "description": "Deterministic ranking for feeds and catalogues, as one dependency-free ESM file. No build step: works in the browser, Deno and Node.",
+  "keywords": [
+    "ranking",
+    "feed",
+    "time-decay",
+    "sort",
+    "relevance",
+    "esm",
+    "browser",
+    "deno",
+    "zero-dependency"
+  ],
+  "license": "MIT",
+  "author": "Youssef Mahersi",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/youssefmahersi/RankingAlgorithm.git",
+    "directory": "sdk/javascript"
+  },
+  "homepage": "https://github.com/youssefmahersi/RankingAlgorithm#readme",
+  "bugs": {
+    "url": "https://github.com/youssefmahersi/RankingAlgorithm/issues"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "main": "./src/index.js",
+  "types": "./types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "default": "./src/index.js"
+    },
+    "./legacy": {
+      "types": "./types/legacy.d.ts",
+      "default": "./src/legacy.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "types",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.types.json --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write \"src/**/*.js\" \"test/**/*.js\" \"types/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.js\" \"test/**/*.js\" \"types/**/*.ts\"",
+    "size": "node -e \"const{gzipSync}=require('node:zlib'),{readFileSync,statSync}=require('node:fs');const s=readFileSync('src/index.js');console.log('raw     ',(statSync('src/index.js').size/1024).toFixed(2)+' kB');console.log('gzipped ',(gzipSync(s).length/1024).toFixed(2)+' kB')\"",
+    "prepublishOnly": "npm test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.15.0",
+    "@types/node": "^22.9.0",
+    "eslint": "^9.15.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

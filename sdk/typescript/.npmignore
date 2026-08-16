@@ -1,0 +1,5 @@
+# `files` in package.json is the allowlist; this only guards against strays.
+test/
+scripts/
+tsconfig*.json
+eslint.config.mjs

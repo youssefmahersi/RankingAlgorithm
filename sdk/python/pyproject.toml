@@ -1,0 +1,56 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "rankingalgorithm"
+version = "2.0.0"
+description = "Deterministic, dependency-free ranking for feeds and catalogues. score = log10(1 + sum(w*p)) - g*log10(t + t0). Auditable, runnable in SQL, explainable."
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Youssef Mahersi" }]
+requires-python = ">=3.9"
+keywords = ["ranking", "feed", "time-decay", "sort", "relevance", "recommender", "hacker-news"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Libraries",
+  "Typing :: Typed",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/youssefmahersi/RankingAlgorithm"
+Documentation = "https://github.com/youssefmahersi/RankingAlgorithm#readme"
+Source = "https://github.com/youssefmahersi/RankingAlgorithm"
+Issues = "https://github.com/youssefmahersi/RankingAlgorithm/issues"
+Changelog = "https://github.com/youssefmahersi/RankingAlgorithm/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "mypy>=1.8", "ruff>=0.6"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/rankingalgorithm"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["error::DeprecationWarning"]
+
+[tool.mypy]
+strict = true
+files = ["src/rankingalgorithm"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+ignore = ["UP006", "UP007", "UP035", "UP045"]  # typing.List/Optional/Union kept for 3.9 support
